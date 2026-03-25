@@ -1,12 +1,3 @@
-from flask import Flask, render_template, request, jsonify
-import requests
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
 @app.route('/scan', methods=['POST'])
 def scan():
     data = request.json
@@ -16,24 +7,31 @@ def scan():
     if not target:
         return jsonify({"status": "error", "message": "ERREUR : Cible vide."})
 
-    # --- LOGIQUE IP ---
+    # --- SCAN IP (OK) ---
     if scan_type == "ip":
-        try:
-            r = requests.get(f"http://ip-api.com/json/{target}?fields=status,message,country,city,isp,org,as,query")
-            res = r.json()
-            if res['status'] == 'success':
-                info = (f"📍 PAYS : {res.get('country')}\n"
-                        f"🏙️ VILLE : {res.get('city')}\n"
-                        f"🌐 FAI : {res.get('isp')}\n"
-                        f"🏢 ORG : {res.get('org')}\n"
-                        f"📡 IP : {res.get('query')}")
-                return jsonify({"status": "success", "data": info})
-            return jsonify({"status": "error", "message": "IP Introuvable."})
-        except:
-            return jsonify({"status": "error", "message": "Erreur de connexion API."})
+        r = requests.get(f"http://ip-api.com/json/{target}")
+        res = r.json()
+        if res.get('status') == 'success':
+            return jsonify({"status": "success", "data": f"📍 PAYS : {res.get('country')}\n🏙️ VILLE : {res.get('city')}\n🌐 FAI : {res.get('isp')}"})
 
-    # --- LOGIQUE ROBLOX ---
+    # --- SCAN ROBLOX (AMÉLIORÉ) ---
     elif scan_type == "roblox":
+        # On cherche d'abord l'ID avec le pseudo
+        r = requests.post("https://users.roblox.com/v1/usernames/users", json={"usernames": [target]})
+        res = r.json()
+        if res.get('data'):
+            u_id = res['data'][0]['id']
+            # On récupère les infos du profil
+            r2 = requests.get(f"https://users.roblox.com/v1/users/{u_id}")
+            res2 = r2.json()
+            return jsonify({"status": "success", "data": f"👤 NOM : {res2.get('displayName')}\n🆔 ID : {u_id}\n📅 CRÉATION : {res2.get('created')[:10]}\n🔗 PROFIL : https://www.roblox.com/users/{u_id}/profile"})
+        return jsonify({"status": "error", "message": "Joueur introuvable."})
+
+    # --- SCAN DISCORD (LIEN DIRECT) ---
+    elif scan_type == "discord":
+        return jsonify({"status": "success", "data": f"🔍 RECHERCHE ID : {target}\n🔗 VOIR PROFIL : https://discord.com/users/{target}\n⚠️ Note : Discord nécessite un Token Bot pour plus d'infos."})
+
+    return jsonify({"status": "error", "message": "Type inconnu."})
         try:
             r = requests.get(f"https://users.roblox.com/v1/users/search?keyword={target}&limit=1")
             res = r.json()
