@@ -16,52 +16,53 @@ def scan():
     if not target:
         return jsonify({"status": "error", "message": "CIBLE VIDE"})
 
-    # --- IP SCAN (NO EMOJI - MAX DATA) ---
+    # --- MODULE IP (MAX DATA) ---
     if scan_type == "ip":
         try:
-            # On utilise une API plus complète pour détecter les Proxy/VPN
             r = requests.get(f"http://ip-api.com/json/{target}?fields=16543743")
             res = r.json()
             if res.get('status') == 'success':
-                info = (f"IP ADDRESS: {res.get('query')}\n"
-                        f"COUNTRY: {res.get('country')} [{res.get('countryCode')}]\n"
-                        f"REGION: {res.get('regionName')} ({res.get('region')})\n"
-                        f"CITY: {res.get('city')}\n"
-                        f"ZIP CODE: {res.get('zip')}\n"
-                        f"ISP: {res.get('isp')}\n"
-                        f"ORGANIZATION: {res.get('org')}\n"
-                        f"LATITUDE: {res.get('lat')}\n"
-                        f"LONGITUDE: {res.get('lon')}\n"
-                        f"TIMEZONE: {res.get('timezone')}\n"
-                        f"MOBILE CONNECTION: {res.get('mobile')}\n"
-                        f"PROXY/VPN: {res.get('proxy')}")
-                return jsonify({"status": "success", "data": info, "lat": res.get('lat'), "lon": res.get('lon')})
+                info = (f"IP ADDRESS: {res.get('query')}\nCOUNTRY: {res.get('country')}\nCITY: {res.get('city')}\nISP: {res.get('isp')}\nLAT/LON: {res.get('lat')}, {res.get('lon')}\nVPN/PROXY: {res.get('proxy')}")
+                return jsonify({"status": "success", "data": info})
             return jsonify({"status": "error", "message": "IP INTROUVABLE"})
         except: return jsonify({"status": "error", "message": "ERREUR API IP"})
 
-    # --- DISCORD (FAST LOOKUP) ---
+    # --- MODULE USER TRACKING (SOCIAL SCAN) ---
+    elif scan_type == "tracking":
+        # Liste des plateformes à scanner
+        sites = {
+            "INSTAGRAM": f"https://www.instagram.com/{target}/",
+            "TIKTOK": f"https://www.tiktok.com/@{target}",
+            "TWITTER": f"https://twitter.com/{target}",
+            "GITHUB": f"https://github.com/{target}",
+            "TWITCH": f"https://www.twitch.tv/{target}",
+            "PINTEREST": f"https://www.pinterest.com/{target}/",
+            "ROBLOX": f"https://www.roblox.com/user.aspx?username={target}",
+            "SNAPCHAT": f"https://www.snapchat.com/add/{target}"
+        }
+        
+        found = []
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        
+        for name, url in sites.items():
+            try:
+                # On check si la page répond 200 (OK)
+                r = requests.get(url, headers=headers, timeout=1.5)
+                if r.status_code == 200:
+                    found.append(f"[+] FOUND: {name} -> {url}")
+                else:
+                    found.append(f"[-] NOT FOUND: {name}")
+            except:
+                found.append(f"[!] ERROR: {name} (BLOCKED)")
+
+        res_text = f"USER_TRACKING_REPORT: {target}\n" + "\n".join(found)
+        return jsonify({"status": "success", "data": res_text})
+
+    # --- MODULE DISCORD ---
     elif scan_type == "discord":
-        # On utilise une redirection directe pour éviter l'attente serveur
-        if not target.isdigit():
-            return jsonify({"status": "error", "message": "ID DOIT ETRE NUMERIQUE"})
-        info = (f"USER ID: {target}\n"
-                f"EXTERNAL LOOKUP: https://discordlookup.com/user/{target}\n"
-                f"AVATAR LINK: https://www.discord.id/api/v1/avatar/{target}")
-        return jsonify({"status": "success", "data": info, "img": f"https://www.discord.id/api/v1/avatar/{target}"})
+        return jsonify({"status": "success", "data": f"USER ID: {target}\nLOOKUP: https://discordlookup.com/user/{target}"})
 
-    # --- EMAIL (DATA BREACH) ---
-    elif scan_type == "email":
-        if "@" not in target:
-            return jsonify({"status": "error", "message": "FORMAT EMAIL INVALIDE"})
-        # Liste technique de bases de données compromises
-        info = (f"TARGET EMAIL: {target}\n"
-                f"DATABASE STATUS: SEARCHING LEAKS...\n"
-                f"MATCHES FOUND: LINKEDIN_2016, ADOBE_2013, CANVA_2019\n"
-                f"SECURITY RISK: HIGH\n"
-                f"RECOMMENDATION: CHANGE PASSWORD / ENABLE 2FA")
-        return jsonify({"status": "success", "data": info})
-
-    return jsonify({"status": "error", "message": "COMMANDE INCONNUE"})
+    return jsonify({"status": "error", "message": "MODULE INCONNU"})
 
 if __name__ == '__main__':
     app.run(debug=True)
