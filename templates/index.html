@@ -2,39 +2,45 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>SHIWIKO | OSINT PANEL</title>
+    <title>OSINT FR • SHIWIKO</title>
     <style>
-        body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; display: flex; justify-content: center; padding: 50px; }
-        .box { border: 2px solid #00ff41; width: 100%; max-width: 600px; padding: 30px; box-shadow: 0 0 15px #00ff4155; }
-        input, select, button { width: 100%; margin-bottom: 15px; padding: 10px; background: #000; border: 1px solid #00ff41; color: #00ff41; }
-        button { cursor: pointer; font-weight: bold; }
-        button:hover { background: #00ff41; color: #000; }
-        #res { border-top: 1px solid #333; margin-top: 20px; padding-top: 20px; white-space: pre-wrap; }
+        body { background: #000; color: #00ff00; font-family: 'Courier New', monospace; padding: 20px; }
+        .console { border: 1px solid #00ff00; padding: 20px; max-width: 800px; margin: auto; }
+        input, select, button { background: #000; border: 1px solid #00ff00; color: #00ff00; padding: 10px; width: 100%; margin: 5px 0; }
+        button:hover { background: #00ff00; color: #000; cursor: pointer; }
+        #output { border-top: 1px solid #00ff00; margin-top: 20px; padding-top: 15px; white-space: pre-wrap; font-size: 13px; color: #00ff00; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>SHIWIKO</h1>
-        <input type="text" id="target" placeholder="Cible (IP, ID Discord, Email)...">
+    <div class="console">
+        <h3>[ SHIWIKO OSINT INTERFACE ]</h3>
+        <input type="text" id="target" placeholder="TARGET (IP, USERNAME, ID)">
         <select id="type">
-            <option value="ip">SCAN IP</option>
-            <option value="discord">SCAN DISCORD ID</option>
-            <option value="email">SCAN EMAIL</option>
+            <option value="tracking">USER_TRACKING (SOCIALS)</option>
+            <option value="ip">IP_DEEP_SCAN</option>
+            <option value="discord">DISCORD_ID_LOOKUP</option>
         </select>
-        <button onclick="run()">LANCER LE SCAN</button>
-        <div id="res">> En attente...</div>
+        <button onclick="execute()">EXECUTE_ANALYSIS</button>
+        <div id="output">SYSTEM_IDLE...</div>
     </div>
+
     <script>
-        async function run() {
-            let res = document.getElementById('res');
-            res.innerText = "> Scan en cours...";
-            let response = await fetch('/scan', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({target: document.getElementById('target').value, type: document.getElementById('type').value})
-            });
-            let data = await response.json();
-            res.innerText = data.status === "success" ? data.data : "ERREUR : " + data.message;
+        async function execute() {
+            const out = document.getElementById('output');
+            out.innerText = "[-] INITIALIZING_SCAN...\n[-] CONNECTING_TO_SERVERS...";
+
+            try {
+                const r = await fetch('/scan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        target: document.getElementById('target').value,
+                        type: document.getElementById('type').value
+                    })
+                });
+                const d = await r.json();
+                out.innerText = d.status === "success" ? d.data : "ERROR: " + d.message;
+            } catch(e) { out.innerText = "ERROR_CONNECTION_FAILED"; }
         }
     </script>
 </body>
