@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-# --- INTERFACE VISUELLE (DESIGN NÉON) ---
+# --- INTERFACE VISUELLE ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="fr">
