@@ -10,41 +10,49 @@ def index():
 @app.route('/scan', methods=['POST'])
 def scan():
     data = request.json
-    target = data.get('target')
+    target = data.get('target', '').strip()
     scan_type = data.get('type')
-    
-    results = {"status": "error", "message": "Aucune donnée trouvée"}
 
-    # --- SCAN IP DIRECT ---
+    if not target:
+        return jsonify({"status": "error", "message": "ERREUR : Cible vide."})
+
+    # --- LOGIQUE IP ---
     if scan_type == "ip":
-        response = requests.get(f"http://ip-api.com/json/{target}")
-        if response.status_code == 200:
-            res = response.json()
-            results = {
-                "status": "success",
-                "data": f"📍 Pays: {res.get('country')}\n🏙️ Ville: {res.get('city')}\n🌐 ISP: {res.get('isp')}\n🛰️ Lat/Lon: {res.get('lat')}, {res.get('lon')}"
-            }
+        try:
+            r = requests.get(f"http://ip-api.com/json/{target}?fields=status,message,country,city,isp,org,as,query")
+            res = r.json()
+            if res['status'] == 'success':
+                info = (f"📍 PAYS : {res.get('country')}\n"
+                        f"🏙️ VILLE : {res.get('city')}\n"
+                        f"🌐 FAI : {res.get('isp')}\n"
+                        f"🏢 ORG : {res.get('org')}\n"
+                        f"📡 IP : {res.get('query')}")
+                return jsonify({"status": "success", "data": info})
+            return jsonify({"status": "error", "message": "IP Introuvable."})
+        except:
+            return jsonify({"status": "error", "message": "Erreur de connexion API."})
 
-    # --- SCAN DISCORD (Via ID public) ---
-    elif scan_type == "discord":
-        # Note: Pour un scan complet, il faudrait un Token Discord, 
-        # mais on peut déjà simuler l'affichage des infos publiques.
-        results = {
-            "status": "success",
-            "data": f"🔍 Recherche de l'ID: {target}\n📡 Statut: Serveur actif\n🛡️ Vérification: Compte certifié"
-        }
-
-    # --- SCAN ROBLOX ---
+    # --- LOGIQUE ROBLOX ---
     elif scan_type == "roblox":
-        response = requests.get(f"https://users.roblox.com/v1/users/search?keyword={target}&limit=1")
-        if response.status_code == 200 and response.json()['data']:
-            user_id = response.json()['data'][0]['id']
-            results = {
-                "status": "success",
-                "data": f"👤 Nom: {target}\n🆔 ID: {user_id}\n🔗 Lien: https://www.roblox.com/users/{user_id}/profile"
-            }
+        try:
+            r = requests.get(f"https://users.roblox.com/v1/users/search?keyword={target}&limit=1")
+            res = r.json()
+            if res.get('data'):
+                user = res['data'][0]
+                u_id = user['id']
+                # On récupère plus d'infos avec l'ID
+                r2 = requests.get(f"https://users.roblox.com/v1/users/{u_id}")
+                res2 = r2.json()
+                info = (f"👤 PSEUDO : {res2.get('name')}\n"
+                        f"🆔 ID : {u_id}\n"
+                        f"📝 BIO : {res2.get('description')[:50]}...\n"
+                        f"📅 CRÉATION : {res2.get('created')[:10]}")
+                return jsonify({"status": "success", "data": info})
+            return jsonify({"status": "error", "message": "Utilisateur introuvable."})
+        except:
+            return jsonify({"status": "error", "message": "Erreur API Roblox."})
 
-    return jsonify(results)
+    return jsonify({"status": "error", "message": "Type de scan inconnu."})
 
 if __name__ == '__main__':
     app.run(debug=True)
