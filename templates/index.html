@@ -2,44 +2,39 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>SHIWIKO OMNI-OSINT</title>
+    <title>SHIWIKO OSINT TERMINAL</title>
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 20px; }
-        .box { border: 1px solid #0f0; padding: 20px; max-width: 800px; margin: auto; box-shadow: 0 0 15px #0f03; }
-        input, select, button { width: 100%; padding: 12px; margin: 5px 0; background: #000; border: 1px solid #0f0; color: #0f0; font-family: inherit; }
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        .console { border: 1px solid #0f0; padding: 20px; max-width: 800px; margin: auto; box-shadow: 0 0 15px #0f03; }
+        input, select, button { width: 100%; padding: 12px; margin: 5px 0; background: #000; border: 1px solid #0f0; color: #0f0; }
         button:hover { background: #0f0; color: #000; cursor: pointer; }
-        #res { border-top: 1px dashed #0f0; margin-top: 20px; padding-top: 20px; white-space: pre-wrap; word-break: break-all; }
-        #avatar { width: 100px; border-radius: 50%; display: none; margin: 10px 0; border: 1px solid #0f0; }
+        #res { border-top: 1px solid #0f0; margin-top: 20px; padding-top: 20px; white-space: pre-wrap; word-break: break-all; }
+        #avatar { width: 80px; border-radius: 50%; display: none; margin-bottom: 10px; border: 1px solid #0f0; }
         a { color: #fff; text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>[ SHIWIKO MULTI-SCANNER ]</h2>
+    <div class="console">
+        <h3>[ SHIWIKO MULTI-SCAN V5 ]</h3>
         <img id="avatar" src="">
-        <input type="text" id="target" placeholder="Cible (IP, Pseudo, ID, Email)...">
+        <input type="text" id="target" placeholder="Cible (IP, Pseudo, ID, +33...)">
         <select id="type">
+            <option value="phone">PHONE_LOOKUP (+33...)</option>
             <option value="tracking">USER_TRACKING (SOCIALS)</option>
-            <option value="ip">IP_DEEP_SCAN (FULL DATA)</option>
-            <option value="discord">DISCORD_LOOKUP (ID)</option>
-            <option value="roblox">ROBLOX_LOOKUP (PSEUDO)</option>
-            <option value="email">EMAIL_BREACH_CHECK</option>
+            <option value="ip">IP_DEEP_SCAN</option>
+            <option value="discord">DISCORD_LOOKUP</option>
+            <option value="roblox">ROBLOX_LOOKUP</option>
         </select>
-        <button onclick="run()">LANCER L'EXTRACTION</button>
-        <div id="res">SYSTEM_IDLE...</div>
+        <button onclick="run()">EXECUTE_ANALYSIS</button>
+        <div id="res">READY_FOR_COMMAND...</div>
     </div>
 
     <script>
-        function linkify(text) {
-            return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
-        }
-
+        function linkify(t) { return t.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>'); }
         async function run() {
             const out = document.getElementById('res');
             const img = document.getElementById('avatar');
-            out.innerText = "RUNNING_PROCESS...";
-            img.style.display = "none";
-
+            out.innerText = "PROCESSING..."; img.style.display = "none";
             const r = await fetch('/scan', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
